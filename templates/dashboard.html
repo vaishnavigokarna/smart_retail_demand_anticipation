@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Analytics Dashboard | Smart Retail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="h-screen overflow-hidden flex">
+
+    <!-- Sidebar -->
+    <aside class="w-64 glass-panel h-full flex flex-col z-20 shrink-0">
+        <div class="p-6 flex items-center gap-3 border-b border-white/5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-white font-bold shadow-[0_0_10px_rgba(0,240,255,0.5)]">
+                <i class="fa-solid fa-chart-line text-sm"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight"><a href="/" class="text-white hover:text-cyan-400">Smart<span class="text-gradient">Retail</span></a></h1>
+        </div>
+        
+        <div class="p-6 flex-1 overflow-y-auto">
+            <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Current Category</div>
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-300 mb-8">
+                <i class="fa-solid fa-layer-group"></i>
+                <span class="font-medium text-sm truncate" id="category-name">{{ category }}</span>
+            </div>
+
+            <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Top Predicted Products</div>
+            <div id="top-products-list" class="flex flex-col gap-3">
+                <!-- Populated via JS -->
+                <div class="text-sm text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading AI predictions...</div>
+            </div>
+        </div>
+        
+        <div class="p-6 border-t border-white/5">
+            <div class="flex items-center gap-3 text-sm text-gray-400">
+                <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></div>
+                System Online
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 h-full flex flex-col overflow-y-auto relative z-10">
+        
+        <!-- Topbar -->
+        <header class="p-6 flex justify-between items-center z-20">
+            <!-- Search -->
+            <div class="relative w-96">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="product-search" placeholder="Search product (e.g. Milk, Laptop)..." class="w-full search-input py-2.5 pl-12 pr-4 rounded-full text-sm transition-all focus:ring-2 focus:ring-purple-500/50">
+            </div>
+            
+            <!-- Timeline -->
+            <div class="flex bg-black/20 rounded-full p-1 border border-white/5" id="timeline-selector">
+                <button class="timeline-btn active px-4 py-1.5 rounded-full text-xs font-semibold" data-time="1W">1 Week</button>
+                <button class="timeline-btn px-4 py-1.5 rounded-full text-xs font-semibold" data-time="1M">1 Month</button>
+                <button class="timeline-btn px-4 py-1.5 rounded-full text-xs font-semibold" data-time="2M">2 Months</button>
+                <button class="timeline-btn px-4 py-1.5 rounded-full text-xs font-semibold" data-time="3M">3 Months</button>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="p-6 pt-0 flex-1 flex flex-col gap-6">
+            
+            <div class="flex items-end justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-white mb-2" id="current-product-title">Loading...</h2>
+                    <p class="text-gray-400 text-sm">Demand Forecasting & Risk Analytics</p>
+                </div>
+                <div class="glass-card px-4 py-2 flex items-center gap-2">
+                    <span class="text-xs text-gray-400 uppercase font-bold">Model</span>
+                    <span class="text-sm font-semibold text-cyan-400">SARIMA/ARIMA Ensembled</span>
+                </div>
+            </div>
+
+            <!-- KPIs -->
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 animate-fade-in-up delay-100">
+                <div class="glass-card p-4">
+                    <div class="text-xs text-gray-400 uppercase font-bold mb-1">Forecast Accuracy</div>
+                    <div class="text-2xl font-bold text-white" id="kpi-accuracy">--</div>
+                </div>
+                <div class="glass-card p-4">
+                    <div class="text-xs text-gray-400 uppercase font-bold mb-1">Demand Growth</div>
+                    <div class="text-2xl font-bold text-green-400" id="kpi-growth">--</div>
+                </div>
+                <div class="glass-card p-4">
+                    <div class="text-xs text-gray-400 uppercase font-bold mb-1">Predicted Revenue (Yearly)</div>
+                    <div class="text-2xl font-bold text-white" id="kpi-revenue">--</div>
+                </div>
+                <div class="glass-card p-4">
+                    <div class="text-xs text-gray-400 uppercase font-bold mb-1">Inventory Risk</div>
+                    <div class="text-2xl font-bold text-yellow-400" id="kpi-risk">--</div>
+                </div>
+                <div class="glass-card p-4">
+                    <div class="text-xs text-gray-400 uppercase font-bold mb-1">Stock Availability</div>
+                    <div class="text-2xl font-bold text-white" id="kpi-stock">--</div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="glass-card p-6 flex-1 flex flex-col animate-fade-in-up delay-200 min-h-[400px]">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold">Demand Trajectory</h3>
+                    <div class="flex gap-4 text-xs font-semibold">
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-purple-500 opacity-50"></span> Historical Data</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.8)]"></span> AI Forecast</div>
+                    </div>
+                </div>
+                <div class="chart-container flex-1 w-full">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Background decoration -->
+    <div class="fixed top-0 right-0 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-0 left-64 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

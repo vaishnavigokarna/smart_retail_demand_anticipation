@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Retail AI Forecasting Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-screen flex flex-col items-center pt-20 pb-10 px-4">
+    
+    <div class="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-[0_0_15px_rgba(0,240,255,0.5)]">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight">Smart<span class="text-gradient">Retail</span></h1>
+        </div>
+        <div class="flex gap-4">
+            <button class="px-6 py-2 rounded-full border border-gray-600 text-sm font-medium hover:border-cyan-400 transition-colors">Documentation</button>
+            <button class="glow-btn px-6 py-2 rounded-full text-white text-sm font-bold shadow-lg">System Status</button>
+        </div>
+    </div>
+
+    <div class="max-w-6xl w-full flex flex-col items-center mt-10 z-10 animate-fade-in-up">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-semibold mb-6">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+            </span>
+            ARIMA/SARIMA Models Active
+        </div>
+        
+        <h2 class="text-5xl md:text-7xl font-extrabold text-center mb-6 leading-tight">
+            Predict the Future of <br/>
+            <span class="text-gradient glow-text">Retail Demand</span>
+        </h2>
+        
+        <p class="text-lg text-gray-400 text-center max-w-2xl mb-12">
+            Enterprise-grade machine learning platform powered by real Walmart dataset. Anticipate trends, mitigate inventory risks, and maximize revenue with our deep forecasting analytics.
+        </p>
+
+        <!-- Categories Grid -->
+        <div class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8" id="categories-container">
+            <!-- Dynamically populated via JS -->
+            <div class="col-span-full text-center text-gray-500 py-10">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-4 text-cyan-400"></i>
+                <p>Loading AI Models & Categories...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Background decoration -->
+    <div class="fixed top-[20%] right-[10%] w-[300px] h-[300px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="fixed bottom-[10%] left-[10%] w-[400px] h-[400px] bg-cyan-600/20 rounded-full blur-[150px] pointer-events-none"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/categories')
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('categories-container');
+                    container.innerHTML = '';
+                    
+                    const icons = {
+                        "Grocery & Supermarket": "fa-basket-shopping text-green-400",
+                        "Electronics & Gadgets": "fa-laptop text-blue-400",
+                        "Fashion & Apparel": "fa-shirt text-pink-400",
+                        "Pharmacy & Healthcare": "fa-pills text-red-400",
+                        "Sports & Fitness": "fa-dumbbell text-orange-400",
+                        "Home & Furniture": "fa-couch text-yellow-400"
+                    };
+
+                    data.categories.forEach((cat, index) => {
+                        const delayClass = `delay-${(index % 4 + 1) * 100}`;
+                        const icon = icons[cat] || "fa-box text-cyan-400";
+                        
+                        const card = document.createElement('a');
+                        card.href = `/dashboard?category=${encodeURIComponent(cat)}`;
+                        card.className = `glass-card p-6 flex flex-col items-start gap-4 cursor-pointer group animate-fade-in-up ${delayClass} no-underline relative overflow-hidden`;
+                        
+                        card.innerHTML = `
+                            <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-cyan-400/50 transition-colors">
+                                <i class="fa-solid ${icon} text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-white group-hover:text-cyan-300 transition-colors">${cat}</h3>
+                            <p class="text-sm text-gray-400">AI Forecasting & Risk Analysis</p>
+                            <div class="mt-auto pt-4 flex items-center justify-between w-full border-t border-white/5 text-sm">
+                                <span class="text-cyan-400 font-medium">Open Dashboard</span>
+                                <i class="fa-solid fa-arrow-right text-gray-500 group-hover:text-cyan-400 transform group-hover:translate-x-1 transition-all"></i>
+                            </div>
+                            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/30 transition-all"></div>
+                        `;
+                        container.appendChild(card);
+                    });
+                })
+                .catch(err => {
+                    document.getElementById('categories-container').innerHTML = `
+                        <div class="col-span-full text-center text-red-400 p-6 glass-card">
+                            Error loading categories. Make sure backend is running.
+                        </div>
+                    `;
+                });
+        });
+    </script>
+</body>
+</html>
