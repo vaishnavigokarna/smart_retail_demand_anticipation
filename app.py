@@ -179,20 +179,20 @@ def api_forecast():
             else:
                 raise ValueError("Model format unknown.")
                 
-            # Scale the forecast to match the product's magnitude from the dataset
-            model_mean = np.mean(raw_forecast) if np.mean(raw_forecast) != 0 else 1.0
-            scale_factor = product_mean / model_mean
-            
-            # To avoid wild scaling if model output is flat/0, provide bounds
-            if np.isnan(scale_factor) or scale_factor < 0.01 or scale_factor > 10000:
-                scale_factor = product_mean / 100.0 if product_mean > 0 else 1.0
+            # Scale the forecast to match the product's magnitude from the dataset safely
+            raw_min = np.min(raw_forecast)
+            raw_max = np.max(raw_forecast)
+            if raw_max - raw_min > 0:
+                normalized = [(v - raw_min) / (raw_max - raw_min) for v in raw_forecast]
+                # Scale to +- 20% of product_mean to keep it realistic and stable
+                forecast_values = [product_mean * 0.8 + v * (product_mean * 0.4) for v in normalized]
+            else:
+                forecast_values = [product_mean] * steps
                 
-            forecast_values = [val * scale_factor for val in raw_forecast]
-            
             # Smooth transition from historical to forecast
             if len(historical_values) > 0 and len(forecast_values) > 0:
                 diff = historical_values[-1] - forecast_values[0]
-                forecast_values = [v + diff for v in forecast_values]
+                forecast_values = [max(0, v + diff) for v in forecast_values] # Ensure no negative values
                 
         else:
              raise ValueError("No model loaded.")
@@ -214,7 +214,7 @@ def api_forecast():
         hist_dates.append((today - datetime.timedelta(days=i)).strftime("%Y-%m-%d"))
 
     # Calculate KPIs
-    yearly_revenue = np.mean(forecast_values) * 365 * 83.5 # Assuming ~83.5 INR per unit/USD
+    yearly_revenue = np.mean(forecast_values) * 52 * 83.5 # Adjusted for Weekly_Sales data
     kpis = {
         "accuracy": "94.2%", 
         "revenue": f"₹{yearly_revenue:,.2f}",
